@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:5000/api/users";
+import API_URL from "./api";
 
 const getUserId = () => {
   const user = JSON.parse(

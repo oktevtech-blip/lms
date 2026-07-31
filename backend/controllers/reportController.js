@@ -12,8 +12,7 @@ const getReports = async (req, res) => {
         IFNULL(SUM(balance), 0) AS outstanding,
         SUM(
           CASE
-            WHEN status = 'Overdue'
-            THEN 1
+            WHEN status = 'Overdue' THEN 1
             ELSE 0
           END
         ) AS overdueLoans
@@ -25,15 +24,17 @@ const getReports = async (req, res) => {
     // ===========================
     const [loanTrend] = await db.query(`
       SELECT
-        DATE_FORMAT(loan_date, '%b') AS month,
+        YEAR(loan_date) AS yr,
+        MONTH(loan_date) AS mn,
+        DATE_FORMAT(MIN(loan_date), '%b') AS month,
         SUM(total_amount) AS amount
       FROM loans
       GROUP BY
         YEAR(loan_date),
         MONTH(loan_date)
       ORDER BY
-        YEAR(loan_date),
-        MONTH(loan_date)
+        yr,
+        mn
     `);
 
     // ===========================
@@ -41,48 +42,52 @@ const getReports = async (req, res) => {
     // ===========================
     const [collectionTrend] = await db.query(`
       SELECT
-        DATE_FORMAT(payment_date, '%b') AS month,
+        YEAR(payment_date) AS yr,
+        MONTH(payment_date) AS mn,
+        DATE_FORMAT(MIN(payment_date), '%b') AS month,
         SUM(amount_paid) AS amount
       FROM payments
       GROUP BY
         YEAR(payment_date),
         MONTH(payment_date)
       ORDER BY
-        YEAR(payment_date),
-        MONTH(payment_date)
+        yr,
+        mn
     `);
 
     // ===========================
     // Top Borrowers
-    // (Principal Borrowed Only)
     // ===========================
     const [topBorrowers] = await db.query(`
       SELECT
         b.borrower_id,
         b.full_name,
-        IFNULL(SUM(l.principal_amount), 0) AS amount
+        SUM(l.principal_amount) AS amount
       FROM borrowers b
-      JOIN loans l
+      INNER JOIN loans l
         ON b.borrower_id = l.borrower_id
       GROUP BY
         b.borrower_id,
         b.full_name
-      ORDER BY amount DESC
+      ORDER BY
+        amount DESC
       LIMIT 10
     `);
 
-    res.json({
+    res.status(200).json({
       summary,
       loanTrend,
       collectionTrend,
       topBorrowers,
     });
-
   } catch (error) {
+    console.error("===== REPORT ERROR =====");
     console.error(error);
 
     res.status(500).json({
+      success: false,
       message: error.message,
+      sql: error.sql || null,
     });
   }
 };

@@ -1,4 +1,4 @@
-import API_URL from "./api";
+const API_URL = "https://lms-backend-w2r8.onrender.com/api/users";
 
 // ==========================
 // Get All Users

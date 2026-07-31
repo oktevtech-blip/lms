@@ -24,7 +24,8 @@ export const updateProfile = async (
   profile
 ) => {
   const response = await fetch(
-    `${API_URL}/profile/${getUserId()}`,
+    // `${API_URL}/profile/${getUserId()}`,
+    `${API_URL}/settings/profile/${getUserId()}`,
     {
       method: "PUT",
       headers: {

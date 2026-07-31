@@ -1,16 +1,14 @@
 import API_URL from "./api";
 
 const getUserId = () => {
-  const user = JSON.parse(
-    localStorage.getItem("user")
-  );
-
+  const user = JSON.parse(localStorage.getItem("user"));
   return user?.user_id;
 };
 
+
 export const getProfile = async () => {
   const response = await fetch(
-    `${API_URL}/profile/${getUserId()}`
+    `${API_URL}/users/profile/${getUserId()}`
   );
 
   if (!response.ok) {
@@ -20,17 +18,14 @@ export const getProfile = async () => {
   return await response.json();
 };
 
-export const updateProfile = async (
-  profile
-) => {
+
+export const updateProfile = async (profile) => {
   const response = await fetch(
-    // `${API_URL}/profile/${getUserId()}`,
-    `${API_URL}/settings/profile/${getUserId()}`,
+    `${API_URL}/users/profile/${getUserId()}`,
     {
       method: "PUT",
       headers: {
-        "Content-Type":
-          "application/json",
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(profile),
     }

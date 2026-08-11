@@ -1,523 +1,165 @@
-// const db = require("../config/db");
-
-// // Get All Borrowers
-// const getBorrowers = async (req, res) => {
-//   try {
-//     const [rows] = await db.query(
-//       "SELECT * FROM borrowers ORDER BY borrower_id DESC"
-//     );
-
-//     res.json(rows);
-//   } catch (error) {
-//     console.error(error);
-
-//     res.status(500).json({
-//       message: "Failed to fetch borrowers",
-//     });
-//   }
-// };
-
-// // Get Single Borrower
-// const getBorrower = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-
-//     const [rows] = await db.query(
-//       "SELECT * FROM borrowers WHERE borrower_id = ?",
-//       [id]
-//     );
-
-//     if (rows.length === 0) {
-//       return res.status(404).json({
-//         message: "Borrower not found",
-//       });
-//     }
-
-//     res.json(rows[0]);
-//   } catch (error) {
-//     console.error(error);
-
-//     res.status(500).json({
-//       message: "Failed to fetch borrower",
-//     });
-//   }
-// };
-
-// // Create Borrower
-// const createBorrower = async (req, res) => {
-//   try {
-//     const {
-//       full_name,
-//       phone,
-//       email,
-//       address,
-//       national_id,
-//     } = req.body;
-
-//     const [result] = await db.query(
-//       `
-//       INSERT INTO borrowers
-//       (
-//         full_name,
-//         phone,
-//         email,
-//         address,
-//         national_id
-//       )
-//       VALUES (?, ?, ?, ?, ?)
-//       `,
-//       [
-//         full_name,
-//         phone,
-//         email,
-//         address,
-//         national_id,
-//       ]
-//     );
-
-//     res.status(201).json({
-//       message: "Borrower created",
-//       borrower_id: result.insertId,
-//     });
-//   } catch (error) {
-//     console.error(error);
-
-//     res.status(500).json({
-//       message: "Failed to create borrower",
-//     });
-//   }
-// };
-
-// // Update Borrower
-// const updateBorrower = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-
-//     const {
-//       full_name,
-//       phone,
-//       email,
-//       address,
-//       national_id,
-//     } = req.body;
-
-//     await db.query(
-//       `
-//       UPDATE borrowers
-//       SET
-//       full_name = ?,
-//       phone = ?,
-//       email = ?,
-//       address = ?,
-//       national_id = ?
-//       WHERE borrower_id = ?
-//       `,
-//       [
-//         full_name,
-//         phone,
-//         email,
-//         address,
-//         national_id,
-//         id,
-//       ]
-//     );
-
-//     res.json({
-//       message: "Borrower updated",
-//     });
-//   } catch (error) {
-//     console.error(error);
-
-//     res.status(500).json({
-//       message: "Failed to update borrower",
-//     });
-//   }
-// };
-
-// // Delete Borrower
-// const deleteBorrower = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-
-//     await db.query(
-//       "DELETE FROM borrowers WHERE borrower_id = ?",
-//       [id]
-//     );
-
-//     res.json({
-//       message: "Borrower deleted",
-//     });
-//   } catch (error) {
-//     console.error(error);
-
-//     res.status(500).json({
-//       message: "Failed to delete borrower",
-//     });
-//   }
-// };
-
-// module.exports = {
-//   getBorrowers,
-//   getBorrower,
-//   createBorrower,
-//   updateBorrower,
-//   deleteBorrower,
-// };
-
 const db = require("../config/db");
 
-// ===============================
-// Get All Loans
-// ===============================
-const getLoans = async (req, res) => {
+// Get All Borrowers
+const getBorrowers = async (req, res) => {
   try {
-    const [rows] = await db.query(`
-      SELECT
-        l.*,
-        b.full_name
-      FROM loans l
-      JOIN borrowers b
-        ON l.borrower_id = b.borrower_id
-      ORDER BY l.loan_id DESC
-    `);
+    const [rows] = await db.query(
+      "SELECT * FROM borrowers ORDER BY borrower_id DESC"
+    );
 
     res.json(rows);
-
   } catch (error) {
+    console.error(error);
 
     res.status(500).json({
-      message: error.message,
+      message: "Failed to fetch borrowers",
     });
-
   }
 };
 
-// ===============================
-// Get One Loan
-// ===============================
-const getLoan = async (req, res) => {
+// Get Single Borrower
+const getBorrower = async (req, res) => {
   try {
+    const { id } = req.params;
 
-    const [loanRows] = await db.query(
-      `
-      SELECT
-        l.*,
-        b.full_name
-      FROM loans l
-      JOIN borrowers b
-        ON l.borrower_id = b.borrower_id
-      WHERE l.loan_id = ?
-      `,
-      [req.params.id]
+    const [rows] = await db.query(
+      "SELECT * FROM borrowers WHERE borrower_id = ?",
+      [id]
     );
 
-    if (!loanRows.length) {
+    if (rows.length === 0) {
       return res.status(404).json({
-        message: "Loan not found",
+        message: "Borrower not found",
       });
     }
 
-    const [payments] = await db.query(
-      `
-      SELECT *
-      FROM payments
-      WHERE loan_id = ?
-      ORDER BY payment_date DESC
-      `,
-      [req.params.id]
-    );
-
-    const [schedule] = await db.query(
-      `
-      SELECT *
-      FROM loan_schedule
-      WHERE loan_id = ?
-      ORDER BY installment_no
-      `,
-      [req.params.id]
-    );
-
-    res.json({
-      loan: loanRows[0],
-      payments,
-      schedule,
-    });
-
+    res.json(rows[0]);
   } catch (error) {
+    console.error(error);
 
     res.status(500).json({
-      message: error.message,
+      message: "Failed to fetch borrower",
     });
-
   }
 };
 
-// ===============================
-// Create Loan
-// ===============================
-const createLoan = async (req, res) => {
-
-  const connection = await db.getConnection();
-
+// Create Borrower
+const createBorrower = async (req, res) => {
   try {
-
-    await connection.beginTransaction();
-
     const {
-      borrower_id,
-      principal_amount,
-      interest_rate,
-      duration_value,
-      duration_unit,
-      loan_date,
-      due_date,
+      full_name,
+      phone,
+      email,
+      address,
+      national_id,
     } = req.body;
 
-    const principal = Number(principal_amount);
-    const interestRate = Number(interest_rate);
-    const duration = Number(duration_value);
-
-    const interest_amount =
-      (principal * interestRate) / 100;
-
-    const total_amount =
-      principal + interest_amount;
-
-    const installment_amount =
-      total_amount / duration;
-
-    const balance = total_amount;
-
-    const [result] = await connection.query(
+    const [result] = await db.query(
       `
-      INSERT INTO loans
+      INSERT INTO borrowers
       (
-        borrower_id,
-        principal_amount,
-        interest_rate,
-        duration_value,
-        duration_unit,
-        interest_amount,
-        total_amount,
-        monthly_installment,
-        amount_paid,
-        balance,
-        loan_date,
-        due_date
+        full_name,
+        phone,
+        email,
+        address,
+        national_id
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?)
       `,
       [
-        borrower_id,
-        principal,
-        interestRate,
-        duration,
-        duration_unit,
-        interest_amount,
-        total_amount,
-        installment_amount,
-        0,
-        balance,
-        loan_date,
-        due_date,
+        full_name,
+        phone,
+        email,
+        address,
+        national_id,
       ]
     );
 
-    const loan_id = result.insertId;
-
-    const startDate = new Date(loan_date);
-
-    for (let i = 1; i <= duration; i++) {
-
-      const installmentDate = new Date(startDate);
-
-      switch (duration_unit) {
-
-        case "Days":
-          installmentDate.setDate(
-            installmentDate.getDate() + i
-          );
-          break;
-
-        case "Weeks":
-          installmentDate.setDate(
-            installmentDate.getDate() + (i * 7)
-          );
-          break;
-
-        case "Months":
-          installmentDate.setMonth(
-            installmentDate.getMonth() + i
-          );
-          break;
-
-        case "Years":
-          installmentDate.setFullYear(
-            installmentDate.getFullYear() + i
-          );
-          break;
-
-        default:
-          installmentDate.setMonth(
-            installmentDate.getMonth() + i
-          );
-      }
-
-      const scheduleDate =
-        installmentDate
-          .toISOString()
-          .split("T")[0];
-
-      await connection.query(
-        `
-        INSERT INTO loan_schedule
-        (
-          loan_id,
-          installment_no,
-          due_date,
-          amount_due,
-          amount_paid,
-          status
-        )
-        VALUES (?, ?, ?, ?, ?, ?)
-        `,
-        [
-          loan_id,
-          i,
-          scheduleDate,
-          installment_amount,
-          0,
-          "Pending",
-        ]
-      );
-
-    }
-
-    await connection.commit();
-
     res.status(201).json({
-      message: "Loan created successfully.",
-      loan_id,
+      message: "Borrower created",
+      borrower_id: result.insertId,
     });
-
   } catch (error) {
-
-    await connection.rollback();
+    console.error(error);
 
     res.status(500).json({
-      message: error.message,
+      message: "Failed to create borrower",
     });
-
-  } finally {
-
-    connection.release();
-
   }
 };
 
-// ===============================
-// Update Loan Status
-// ===============================
-const updateLoanStatus = async (req, res) => {
+// Update Borrower
+const updateBorrower = async (req, res) => {
   try {
+    const { id } = req.params;
+
+    const {
+      full_name,
+      phone,
+      email,
+      address,
+      national_id,
+    } = req.body;
 
     await db.query(
       `
-      UPDATE loans
-      SET status = ?
-      WHERE loan_id = ?
+      UPDATE borrowers
+      SET
+      full_name = ?,
+      phone = ?,
+      email = ?,
+      address = ?,
+      national_id = ?
+      WHERE borrower_id = ?
       `,
       [
-        req.body.status,
-        req.params.id,
+        full_name,
+        phone,
+        email,
+        address,
+        national_id,
+        id,
       ]
     );
 
     res.json({
-      message: "Loan status updated.",
+      message: "Borrower updated",
     });
-
   } catch (error) {
+    console.error(error);
 
     res.status(500).json({
-      message: error.message,
+      message: "Failed to update borrower",
     });
-
   }
 };
 
-// ===============================
-// Delete Loan
-// ===============================
-const deleteLoan = async (req, res) => {
-
-  const connection = await db.getConnection();
-
+// Delete Borrower
+const deleteBorrower = async (req, res) => {
   try {
+    const { id } = req.params;
 
-    await connection.beginTransaction();
-
-    const loanId = req.params.id;
-
-    await connection.query(
-      `
-      DELETE FROM loan_schedule
-      WHERE loan_id = ?
-      `,
-      [loanId]
+    await db.query(
+      "DELETE FROM borrowers WHERE borrower_id = ?",
+      [id]
     );
-
-    await connection.query(
-      `
-      DELETE FROM payments
-      WHERE loan_id = ?
-      `,
-      [loanId]
-    );
-
-    const [result] = await connection.query(
-      `
-      DELETE FROM loans
-      WHERE loan_id = ?
-      `,
-      [loanId]
-    );
-
-    if (result.affectedRows === 0) {
-
-      await connection.rollback();
-
-      return res.status(404).json({
-        message: "Loan not found",
-      });
-
-    }
-
-    await connection.commit();
 
     res.json({
-      message: "Loan deleted successfully.",
+      message: "Borrower deleted",
     });
-
   } catch (error) {
-
-    await connection.rollback();
+    console.error(error);
 
     res.status(500).json({
-      message: error.message,
+      message: "Failed to delete borrower",
     });
-
-  } finally {
-
-    connection.release();
-
   }
 };
 
 module.exports = {
-  getLoans,
-  getLoan,
-  createLoan,
-  updateLoanStatus,
-  deleteLoan,
+  getBorrowers,
+  getBorrower,
+  createBorrower,
+  updateBorrower,
+  deleteBorrower,
 };

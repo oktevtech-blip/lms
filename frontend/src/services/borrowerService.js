@@ -1,113 +1,24 @@
-// import API_URL from "./api";
-
-// // Get all borrowers
-// export const getBorrowers = async () => {
-//   const response = await fetch(
-//     `${API_URL}/borrowers`
-//   );
-
-//   return response.json();
-// };
-
-// // Get one borrower
-// export const getBorrower = async (id) => {
-//   const response = await fetch(
-//     `${API_URL}/borrowers/${id}`
-//   );
-
-//   return response.json();
-// };
-
-// // Create borrower
-// export const createBorrower = async (data) => {
-//   const response = await fetch(
-//     `${API_URL}/borrowers`,
-//     {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify(data),
-//     }
-//   );
-
-//   return response.json();
-// };
-
-// // Update borrower
-// export const updateBorrower = async (
-//   id,
-//   data
-// ) => {
-//   const response = await fetch(
-//     `${API_URL}/borrowers/${id}`,
-//     {
-//       method: "PUT",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify(data),
-//     }
-//   );
-
-//   return response.json();
-// };
-
-// // Delete borrower
-// export const deleteBorrower = async (
-//   id
-// ) => {
-//   const response = await fetch(
-//     `${API_URL}/borrowers/${id}`,
-//     {
-//       method: "DELETE",
-//     }
-//   );
-
-//   return response.json();
-// };
-
 import API_URL from "./api";
 
-// =============================
-// Get All Borrowers
-// =============================
+// Get all borrowers
 export const getBorrowers = async () => {
-  const response = await fetch(`${API_URL}/borrowers`);
+  const response = await fetch(
+    `${API_URL}/borrowers`
+  );
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      data.message || "Failed to load borrowers"
-    );
-  }
-
-  return data;
+  return response.json();
 };
 
-// =============================
-// Get Single Borrower
-// =============================
+// Get one borrower
 export const getBorrower = async (id) => {
   const response = await fetch(
     `${API_URL}/borrowers/${id}`
   );
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      data.message || "Borrower not found"
-    );
-  }
-
-  return data;
+  return response.json();
 };
 
-// =============================
-// Create Borrower
-// =============================
+// Create borrower
 export const createBorrower = async (data) => {
   const response = await fetch(
     `${API_URL}/borrowers`,
@@ -120,21 +31,14 @@ export const createBorrower = async (data) => {
     }
   );
 
-  const result = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      result.message || "Failed to create borrower"
-    );
-  }
-
-  return result;
+  return response.json();
 };
 
-// =============================
-// Update Borrower
-// =============================
-export const updateBorrower = async (id, data) => {
+// Update borrower
+export const updateBorrower = async (
+  id,
+  data
+) => {
   const response = await fetch(
     `${API_URL}/borrowers/${id}`,
     {
@@ -146,21 +50,13 @@ export const updateBorrower = async (id, data) => {
     }
   );
 
-  const result = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      result.message || "Failed to update borrower"
-    );
-  }
-
-  return result;
+  return response.json();
 };
 
-// =============================
-// Delete Borrower
-// =============================
-export const deleteBorrower = async (id) => {
+// Delete borrower
+export const deleteBorrower = async (
+  id
+) => {
   const response = await fetch(
     `${API_URL}/borrowers/${id}`,
     {
@@ -168,13 +64,5 @@ export const deleteBorrower = async (id) => {
     }
   );
 
-  const result = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      result.message || "Failed to delete borrower"
-    );
-  }
-
-  return result;
+  return response.json();
 };

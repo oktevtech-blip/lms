@@ -1,4 +1,4 @@
-const db = require("../config/db");
+// const db = require("../config/db");
 
 // // Get All Borrowers
 // const getBorrowers = async (req, res) => {
@@ -17,12 +17,185 @@ const db = require("../config/db");
 //   }
 // };
 
-// Get Single Borrower + Loans
+// // Get Single Borrower
+// const getBorrower = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     const [rows] = await db.query(
+//       "SELECT * FROM borrowers WHERE borrower_id = ?",
+//       [id]
+//     );
+
+//     if (rows.length === 0) {
+//       return res.status(404).json({
+//         message: "Borrower not found",
+//       });
+//     }
+
+//     res.json(rows[0]);
+//   } catch (error) {
+//     console.error(error);
+
+//     res.status(500).json({
+//       message: "Failed to fetch borrower",
+//     });
+//   }
+// };
+
+// // Create Borrower
+// const createBorrower = async (req, res) => {
+//   try {
+//     const {
+//       full_name,
+//       phone,
+//       email,
+//       address,
+//       national_id,
+//     } = req.body;
+
+//     const [result] = await db.query(
+//       `
+//       INSERT INTO borrowers
+//       (
+//         full_name,
+//         phone,
+//         email,
+//         address,
+//         national_id
+//       )
+//       VALUES (?, ?, ?, ?, ?)
+//       `,
+//       [
+//         full_name,
+//         phone,
+//         email,
+//         address,
+//         national_id,
+//       ]
+//     );
+
+//     res.status(201).json({
+//       message: "Borrower created",
+//       borrower_id: result.insertId,
+//     });
+//   } catch (error) {
+//     console.error(error);
+
+//     res.status(500).json({
+//       message: "Failed to create borrower",
+//     });
+//   }
+// };
+
+// // Update Borrower
+// const updateBorrower = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     const {
+//       full_name,
+//       phone,
+//       email,
+//       address,
+//       national_id,
+//     } = req.body;
+
+//     await db.query(
+//       `
+//       UPDATE borrowers
+//       SET
+//       full_name = ?,
+//       phone = ?,
+//       email = ?,
+//       address = ?,
+//       national_id = ?
+//       WHERE borrower_id = ?
+//       `,
+//       [
+//         full_name,
+//         phone,
+//         email,
+//         address,
+//         national_id,
+//         id,
+//       ]
+//     );
+
+//     res.json({
+//       message: "Borrower updated",
+//     });
+//   } catch (error) {
+//     console.error(error);
+
+//     res.status(500).json({
+//       message: "Failed to update borrower",
+//     });
+//   }
+// };
+
+// // Delete Borrower
+// const deleteBorrower = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     await db.query(
+//       "DELETE FROM borrowers WHERE borrower_id = ?",
+//       [id]
+//     );
+
+//     res.json({
+//       message: "Borrower deleted",
+//     });
+//   } catch (error) {
+//     console.error(error);
+
+//     res.status(500).json({
+//       message: "Failed to delete borrower",
+//     });
+//   }
+// };
+
+// module.exports = {
+//   getBorrowers,
+//   getBorrower,
+//   createBorrower,
+//   updateBorrower,
+//   deleteBorrower,
+// };
+
+
+const db = require("../config/db");
+
+// =====================================================
+// Get All Borrowers
+// =====================================================
+const getBorrowers = async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT * FROM borrowers ORDER BY borrower_id DESC"
+    );
+
+    res.json(rows);
+  } catch (error) {
+    console.error("Get borrowers error:", error);
+
+    res.status(500).json({
+      message: "Failed to fetch borrowers",
+    });
+  }
+};
+
+// =====================================================
+// Get Single Borrower + Their Loans
+// =====================================================
 const getBorrower = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // ---------------------------------------------
     // Get borrower
+    // ---------------------------------------------
     const [borrowerRows] = await db.query(
       `
       SELECT *
@@ -38,7 +211,11 @@ const getBorrower = async (req, res) => {
       });
     }
 
+    const borrower = borrowerRows[0];
+
+    // ---------------------------------------------
     // Get borrower's loans
+    // ---------------------------------------------
     const [loanRows] = await db.query(
       `
       SELECT
@@ -64,9 +241,41 @@ const getBorrower = async (req, res) => {
       [id]
     );
 
+    // ---------------------------------------------
+    // Calculate loan summary
+    // ---------------------------------------------
+    const activeLoans = loanRows.filter(
+      (loan) =>
+        loan.status === "Active" ||
+        loan.status === "Overdue"
+    );
+
+    const totalBorrowed = loanRows.reduce(
+      (total, loan) =>
+        total + Number(loan.principal_amount || 0),
+      0
+    );
+
+    const outstandingBalance = loanRows.reduce(
+      (total, loan) =>
+        total + Number(loan.balance || 0),
+      0
+    );
+
+    // ---------------------------------------------
+    // Return borrower + loans + summary
+    // ---------------------------------------------
     res.json({
-      borrower: borrowerRows[0],
+      ...borrower,
+
       loans: loanRows,
+
+      loanSummary: {
+        activeLoans: activeLoans.length,
+        totalLoans: loanRows.length,
+        totalBorrowed,
+        outstandingBalance,
+      },
     });
 
   } catch (error) {
@@ -74,38 +283,13 @@ const getBorrower = async (req, res) => {
 
     res.status(500).json({
       message: "Failed to fetch borrower",
-      error: error.message,
     });
   }
 };
 
-// Get Single Borrower
-const getBorrower = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const [rows] = await db.query(
-      "SELECT * FROM borrowers WHERE borrower_id = ?",
-      [id]
-    );
-
-    if (rows.length === 0) {
-      return res.status(404).json({
-        message: "Borrower not found",
-      });
-    }
-
-    res.json(rows[0]);
-  } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      message: "Failed to fetch borrower",
-    });
-  }
-};
-
+// =====================================================
 // Create Borrower
+// =====================================================
 const createBorrower = async (req, res) => {
   try {
     const {
@@ -141,8 +325,9 @@ const createBorrower = async (req, res) => {
       message: "Borrower created",
       borrower_id: result.insertId,
     });
+
   } catch (error) {
-    console.error(error);
+    console.error("Create borrower error:", error);
 
     res.status(500).json({
       message: "Failed to create borrower",
@@ -150,7 +335,9 @@ const createBorrower = async (req, res) => {
   }
 };
 
+// =====================================================
 // Update Borrower
+// =====================================================
 const updateBorrower = async (req, res) => {
   try {
     const { id } = req.params;
@@ -167,11 +354,11 @@ const updateBorrower = async (req, res) => {
       `
       UPDATE borrowers
       SET
-      full_name = ?,
-      phone = ?,
-      email = ?,
-      address = ?,
-      national_id = ?
+        full_name = ?,
+        phone = ?,
+        email = ?,
+        address = ?,
+        national_id = ?
       WHERE borrower_id = ?
       `,
       [
@@ -187,8 +374,9 @@ const updateBorrower = async (req, res) => {
     res.json({
       message: "Borrower updated",
     });
+
   } catch (error) {
-    console.error(error);
+    console.error("Update borrower error:", error);
 
     res.status(500).json({
       message: "Failed to update borrower",
@@ -196,7 +384,9 @@ const updateBorrower = async (req, res) => {
   }
 };
 
+// =====================================================
 // Delete Borrower
+// =====================================================
 const deleteBorrower = async (req, res) => {
   try {
     const { id } = req.params;
@@ -209,8 +399,9 @@ const deleteBorrower = async (req, res) => {
     res.json({
       message: "Borrower deleted",
     });
+
   } catch (error) {
-    console.error(error);
+    console.error("Delete borrower error:", error);
 
     res.status(500).json({
       message: "Failed to delete borrower",
@@ -218,6 +409,9 @@ const deleteBorrower = async (req, res) => {
   }
 };
 
+// =====================================================
+// Export Controllers
+// =====================================================
 module.exports = {
   getBorrowers,
   getBorrower,

@@ -239,7 +239,7 @@
 // export default ViewBorrower;
 
 import { useEffect, useState } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import {
   FaArrowLeft,
@@ -248,11 +248,10 @@ import {
   FaIdCard,
   FaEnvelope,
   FaMapMarkerAlt,
-  FaMoneyBillWave,
-  FaCalendarAlt,
 } from "react-icons/fa";
 
 import { getBorrower } from "../services/borrowerService";
+import { getLoans } from "../services/loanService";
 
 const ViewBorrower = () => {
   const navigate = useNavigate();
@@ -263,71 +262,68 @@ const ViewBorrower = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadBorrower();
+    loadBorrowerData();
   }, [id]);
 
-  const loadBorrower = async () => {
+  const loadBorrowerData = async () => {
     try {
       setLoading(true);
 
-      const data = await getBorrower(id);
+      // Fetch the borrower using the existing working endpoint
+      const borrowerData = await getBorrower(id);
 
-      /*
-        New backend response:
+      setBorrower(borrowerData);
 
-        {
-          borrower: {...},
-          loans: [...]
-        }
-      */
+      // Fetch all loans
+      const loansData = await getLoans();
 
-      setBorrower(data.borrower || null);
-      setLoans(Array.isArray(data.loans) ? data.loans : []);
+      // Make sure we received an array
+      const allLoans = Array.isArray(loansData) ? loansData : [];
 
+      // Only keep loans belonging to this borrower
+      const borrowerLoans = allLoans.filter(
+        (loan) =>
+          Number(loan.borrower_id) === Number(id)
+      );
+
+      setLoans(borrowerLoans);
     } catch (error) {
-      console.error("Failed to load borrower:", error);
-
-      alert(error.message || "Failed to load borrower.");
+      console.error("Failed to load borrower details:", error);
 
       setBorrower(null);
       setLoans([]);
+
+      alert(
+        error.message || "Failed to load borrower details."
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  // =============================
+  // -----------------------------------------
   // Loading
-  // =============================
+  // -----------------------------------------
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-
-          <p className="mt-4 text-gray-500">
-            Loading borrower...
-          </p>
-        </div>
+      <div className="text-center py-20 text-lg text-gray-600">
+        Loading borrower...
       </div>
     );
   }
 
-  // =============================
-  // Borrower Not Found
-  // =============================
+  // -----------------------------------------
+  // Borrower not found
+  // -----------------------------------------
 
   if (!borrower) {
     return (
-      <div className="flex items-center justify-center min-h-[400px] px-4">
-        <div className="bg-white rounded-xl shadow-sm p-8 text-center max-w-md w-full">
+      <div className="flex justify-center py-20 px-4">
+        <div className="bg-white rounded-xl shadow-sm p-8 text-center max-w-lg w-full">
+          <FaUser className="text-5xl text-gray-400 mx-auto mb-4" />
 
-          <div className="text-5xl mb-4">
-            👤
-          </div>
-
-          <h2 className="text-xl font-bold">
+          <h2 className="text-2xl font-bold">
             Borrower Not Found
           </h2>
 
@@ -337,23 +333,22 @@ const ViewBorrower = () => {
 
           <button
             onClick={() => navigate("/borrowers")}
-            className="mt-5 bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg"
+            className="mt-6 bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg"
           >
             Back to Borrowers
           </button>
-
         </div>
       </div>
     );
   }
 
-  // =============================
-  // Loan Calculations
-  // =============================
+  // -----------------------------------------
+  // Loan calculations
+  // -----------------------------------------
 
   const activeLoans = loans.filter(
     (loan) => loan.status === "Active"
-  ).length;
+  );
 
   const totalBorrowed = loans.reduce(
     (total, loan) =>
@@ -367,32 +362,26 @@ const ViewBorrower = () => {
     0
   );
 
-  const totalPaid = loans.reduce(
-    (total, loan) =>
-      total + Number(loan.amount_paid || 0),
-    0
-  );
+  // -----------------------------------------
+  // Currency formatter
+  // -----------------------------------------
 
-  const formatMoney = (amount) => {
-    return Number(amount || 0).toLocaleString();
+  const formatCurrency = (amount) => {
+    return `UGX ${Number(amount || 0).toLocaleString()}`;
   };
 
-  // =============================
-  // Page
-  // =============================
-
   return (
-    <div className="w-full max-w-7xl mx-auto">
+    <div className="w-full">
 
-      {/* =============================
-          Header
-      ============================= */}
+      {/* ============================= */}
+      {/* Header */}
+      {/* ============================= */}
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
 
         <button
           onClick={() => navigate("/borrowers")}
-          className="flex items-center justify-center gap-2 px-4 py-2 bg-white border rounded-lg hover:bg-gray-50 w-fit"
+          className="flex items-center justify-center sm:justify-start gap-2 px-4 py-2 bg-white border rounded-lg hover:bg-gray-50 w-full sm:w-auto"
         >
           <FaArrowLeft />
           Back
@@ -404,13 +393,13 @@ const ViewBorrower = () => {
 
       </div>
 
-      {/* =============================
-          Profile
-      ============================= */}
+      {/* ============================= */}
+      {/* Profile */}
+      {/* ============================= */}
 
       <div className="bg-white rounded-xl shadow-sm p-5 sm:p-6 mb-6">
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+        <div className="flex flex-col sm:flex-row items-center sm:items-center gap-5 sm:gap-6">
 
           <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
 
@@ -418,9 +407,9 @@ const ViewBorrower = () => {
 
           </div>
 
-          <div className="min-w-0">
+          <div className="text-center sm:text-left">
 
-            <h2 className="text-xl sm:text-2xl font-bold break-words">
+            <h2 className="text-xl sm:text-2xl font-bold">
               {borrower.full_name}
             </h2>
 
@@ -434,9 +423,9 @@ const ViewBorrower = () => {
 
       </div>
 
-      {/* =============================
-          Information Cards
-      ============================= */}
+      {/* ============================= */}
+      {/* Information */}
+      {/* ============================= */}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
@@ -455,15 +444,13 @@ const ViewBorrower = () => {
               <FaIdCard className="text-slate-500 mt-1 flex-shrink-0" />
 
               <div className="min-w-0">
-
-                <p className="text-xs text-gray-400 mb-1">
+                <p className="text-sm text-gray-500">
                   National ID
                 </p>
 
                 <p className="break-words">
                   {borrower.national_id || "Not provided"}
                 </p>
-
               </div>
 
             </div>
@@ -473,15 +460,13 @@ const ViewBorrower = () => {
               <FaPhone className="text-slate-500 mt-1 flex-shrink-0" />
 
               <div className="min-w-0">
-
-                <p className="text-xs text-gray-400 mb-1">
+                <p className="text-sm text-gray-500">
                   Phone
                 </p>
 
                 <p className="break-words">
                   {borrower.phone || "Not provided"}
                 </p>
-
               </div>
 
             </div>
@@ -491,15 +476,13 @@ const ViewBorrower = () => {
               <FaEnvelope className="text-slate-500 mt-1 flex-shrink-0" />
 
               <div className="min-w-0">
-
-                <p className="text-xs text-gray-400 mb-1">
+                <p className="text-sm text-gray-500">
                   Email
                 </p>
 
                 <p className="break-words">
                   {borrower.email || "No email"}
                 </p>
-
               </div>
 
             </div>
@@ -509,15 +492,13 @@ const ViewBorrower = () => {
               <FaMapMarkerAlt className="text-slate-500 mt-1 flex-shrink-0" />
 
               <div className="min-w-0">
-
-                <p className="text-xs text-gray-400 mb-1">
+                <p className="text-sm text-gray-500">
                   Address
                 </p>
 
                 <p className="break-words">
                   {borrower.address || "Not provided"}
                 </p>
-
               </div>
 
             </div>
@@ -530,70 +511,44 @@ const ViewBorrower = () => {
 
         <div className="bg-white rounded-xl shadow-sm p-5 sm:p-6">
 
-          <div className="flex items-center gap-2 mb-5">
+          <h3 className="font-semibold text-lg mb-5">
+            Loan Summary
+          </h3>
 
-            <FaMoneyBillWave className="text-green-600" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-5">
 
-            <h3 className="font-semibold text-lg">
-              Loan Summary
-            </h3>
-
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-
-            {/* Active Loans */}
-
-            <div className="bg-green-50 rounded-lg p-4">
+            <div>
 
               <p className="text-gray-500 text-sm">
                 Active Loans
               </p>
 
-              <p className="text-2xl font-bold text-green-700 mt-1">
-                {activeLoans}
+              <p className="text-2xl font-bold mt-1">
+                {activeLoans.length}
               </p>
 
             </div>
 
-            {/* Total Borrowed */}
-
-            <div className="bg-blue-50 rounded-lg p-4">
+            <div>
 
               <p className="text-gray-500 text-sm">
                 Total Borrowed
               </p>
 
-              <p className="text-xl sm:text-2xl font-bold text-blue-700 mt-1 break-words">
-                UGX {formatMoney(totalBorrowed)}
+              <p className="text-xl sm:text-2xl font-bold mt-1 break-words">
+                {formatCurrency(totalBorrowed)}
               </p>
 
             </div>
 
-            {/* Amount Paid */}
-
-            <div className="bg-purple-50 rounded-lg p-4">
-
-              <p className="text-gray-500 text-sm">
-                Total Paid
-              </p>
-
-              <p className="text-xl sm:text-2xl font-bold text-purple-700 mt-1 break-words">
-                UGX {formatMoney(totalPaid)}
-              </p>
-
-            </div>
-
-            {/* Outstanding */}
-
-            <div className="bg-red-50 rounded-lg p-4">
+            <div>
 
               <p className="text-gray-500 text-sm">
                 Outstanding Balance
               </p>
 
               <p className="text-xl sm:text-2xl font-bold text-red-600 mt-1 break-words">
-                UGX {formatMoney(outstandingBalance)}
+                {formatCurrency(outstandingBalance)}
               </p>
 
             </div>
@@ -604,161 +559,204 @@ const ViewBorrower = () => {
 
       </div>
 
-      {/* =============================
-          Loans
-      ============================= */}
+      {/* ============================= */}
+      {/* Loans */}
+      {/* ============================= */}
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
 
         <div className="p-5 sm:p-6 border-b">
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <h3 className="font-semibold text-lg">
+            Loans
+          </h3>
 
-            <div>
-
-              <h3 className="font-semibold text-lg">
-                Loans
-              </h3>
-
-              <p className="text-sm text-gray-500 mt-1">
-                {loans.length} loan{loans.length !== 1 ? "s" : ""}
-                {" "}associated with this borrower
-              </p>
-
-            </div>
-
-            <Link
-              to="/loans/create"
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm text-center"
-            >
-              Create Loan
-            </Link>
-
-          </div>
+          <p className="text-sm text-gray-500 mt-1">
+            Loans belonging to {borrower.full_name}
+          </p>
 
         </div>
 
         {loans.length > 0 ? (
 
-          /*
-            Horizontal scrolling is only applied to the table.
-            This prevents the entire page from becoming too wide
-            on phones.
-          */
+          <>
+            {/* Desktop/tablet table */}
 
-          <div className="overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto">
 
-            <table className="w-full min-w-[950px]">
+              <table className="w-full">
 
-              <thead className="bg-slate-100">
+                <thead className="bg-slate-100">
 
-                <tr>
+                  <tr>
 
-                  <th className="text-left px-5 py-4">
-                    Loan
-                  </th>
+                    <th className="text-left px-6 py-4">
+                      Amount
+                    </th>
 
-                  <th className="text-left px-5 py-4">
-                    Principal
-                  </th>
+                    <th className="text-left px-6 py-4">
+                      Interest
+                    </th>
 
-                  <th className="text-left px-5 py-4">
-                    Interest
-                  </th>
+                    <th className="text-left px-6 py-4">
+                      Total
+                    </th>
 
-                  <th className="text-left px-5 py-4">
-                    Duration
-                  </th>
+                    <th className="text-left px-6 py-4">
+                      Balance
+                    </th>
 
-                  <th className="text-left px-5 py-4">
-                    Total
-                  </th>
+                    <th className="text-left px-6 py-4">
+                      Status
+                    </th>
 
-                  <th className="text-left px-5 py-4">
-                    Paid
-                  </th>
+                    <th className="text-left px-6 py-4">
+                      Action
+                    </th>
 
-                  <th className="text-left px-5 py-4">
-                    Balance
-                  </th>
+                  </tr>
 
-                  <th className="text-left px-5 py-4">
-                    Due Date
-                  </th>
+                </thead>
 
-                  <th className="text-left px-5 py-4">
-                    Status
-                  </th>
+                <tbody>
 
-                  <th className="text-center px-5 py-4">
-                    Action
-                  </th>
+                  {loans.map((loan) => (
 
-                </tr>
+                    <tr
+                      key={loan.loan_id}
+                      className="border-t hover:bg-slate-50"
+                    >
 
-              </thead>
+                      <td className="px-6 py-4">
+                        {formatCurrency(
+                          loan.principal_amount
+                        )}
+                      </td>
 
-              <tbody>
+                      <td className="px-6 py-4">
+                        {loan.interest_rate}%
+                      </td>
 
-                {loans.map((loan) => (
+                      <td className="px-6 py-4 font-medium">
+                        {formatCurrency(
+                          loan.total_amount
+                        )}
+                      </td>
 
-                  <tr
-                    key={loan.loan_id}
-                    className="border-t hover:bg-slate-50"
-                  >
+                      <td className="px-6 py-4 text-red-600 font-semibold">
+                        {formatCurrency(
+                          loan.balance
+                        )}
+                      </td>
 
-                    <td className="px-5 py-4 font-medium">
-                      #{loan.loan_id}
-                    </td>
+                      <td className="px-6 py-4">
 
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      UGX {formatMoney(loan.principal_amount)}
-                    </td>
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm ${
+                            loan.status === "Completed"
+                              ? "bg-blue-100 text-blue-700"
+                              : loan.status === "Overdue"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-green-100 text-green-700"
+                          }`}
+                        >
+                          {loan.status}
+                        </span>
 
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      {loan.interest_rate}%
-                    </td>
+                      </td>
 
-                    <td className="px-5 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4">
 
-                      {loan.duration_value}{" "}
+                        <button
+                          onClick={() =>
+                            navigate(
+                              `/loans/view/${loan.loan_id}`
+                            )
+                          }
+                          className="px-3 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 text-sm"
+                        >
+                          View
+                        </button>
 
-                      {loan.duration_unit}
+                      </td>
 
-                    </td>
+                    </tr>
 
-                    <td className="px-5 py-4 font-medium whitespace-nowrap">
-                      UGX {formatMoney(loan.total_amount)}
-                    </td>
+                  ))}
 
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      UGX {formatMoney(loan.amount_paid)}
-                    </td>
+                </tbody>
 
-                    <td className="px-5 py-4 text-red-600 font-semibold whitespace-nowrap">
-                      UGX {formatMoney(loan.balance)}
-                    </td>
+              </table>
 
-                    <td className="px-5 py-4 whitespace-nowrap">
+            </div>
 
-                      <div className="flex items-center gap-2">
+            {/* Mobile cards */}
 
-                        <FaCalendarAlt className="text-gray-400" />
+            <div className="md:hidden p-4 space-y-4">
 
-                        {loan.due_date
-                          ? new Date(
-                              loan.due_date
-                            ).toLocaleDateString()
-                          : "N/A"}
+              {loans.map((loan) => (
 
-                      </div>
+                <div
+                  key={loan.loan_id}
+                  className="border rounded-xl p-4"
+                >
 
-                    </td>
+                  <div className="grid grid-cols-2 gap-4">
 
-                    <td className="px-5 py-4">
+                    <div>
+                      <p className="text-xs text-gray-500">
+                        Principal
+                      </p>
+
+                      <p className="font-semibold">
+                        {formatCurrency(
+                          loan.principal_amount
+                        )}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-gray-500">
+                        Interest
+                      </p>
+
+                      <p className="font-semibold">
+                        {loan.interest_rate}%
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-gray-500">
+                        Total
+                      </p>
+
+                      <p className="font-semibold">
+                        {formatCurrency(
+                          loan.total_amount
+                        )}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-gray-500">
+                        Balance
+                      </p>
+
+                      <p className="font-semibold text-red-600">
+                        {formatCurrency(
+                          loan.balance
+                        )}
+                      </p>
+                    </div>
+
+                    <div>
+
+                      <p className="text-xs text-gray-500 mb-1">
+                        Status
+                      </p>
 
                       <span
-                        className={`px-3 py-1 rounded-full text-sm whitespace-nowrap ${
+                        className={`inline-block px-3 py-1 rounded-full text-sm ${
                           loan.status === "Completed"
                             ? "bg-blue-100 text-blue-700"
                             : loan.status === "Overdue"
@@ -769,51 +767,50 @@ const ViewBorrower = () => {
                         {loan.status}
                       </span>
 
-                    </td>
+                    </div>
 
-                    <td className="px-5 py-4 text-center">
+                  </div>
 
-                      <Link
-                        to={`/loans/view/${loan.loan_id}`}
-                        className="inline-block bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-2 rounded-lg text-sm"
-                      >
-                        View
-                      </Link>
+                  <button
+                    onClick={() =>
+                      navigate(
+                        `/loans/view/${loan.loan_id}`
+                      )
+                    }
+                    className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg"
+                  >
+                    View Loan
+                  </button>
 
-                    </td>
+                </div>
 
-                  </tr>
+              ))}
 
-                ))}
-
-              </tbody>
-
-            </table>
-
-          </div>
+            </div>
+          </>
 
         ) : (
 
-          <div className="text-center py-12 px-6">
+          <div className="text-center py-12 px-5">
 
-            <div className="text-5xl mb-4">
+            <div className="text-4xl mb-3">
               💰
             </div>
 
-            <h3 className="text-lg font-semibold">
+            <h4 className="font-semibold text-lg">
               No Loans Found
-            </h3>
+            </h4>
 
             <p className="text-gray-500 mt-1">
               This borrower does not have any loans yet.
             </p>
 
-            <Link
-              to="/loans/create"
-              className="inline-block mt-5 bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg"
+            <button
+              onClick={() => navigate("/loans/create")}
+              className="mt-5 bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg"
             >
               Create Loan
-            </Link>
+            </button>
 
           </div>
 

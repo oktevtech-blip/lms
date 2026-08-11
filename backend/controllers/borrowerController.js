@@ -1,18 +1,80 @@
 const db = require("../config/db");
 
-// Get All Borrowers
-const getBorrowers = async (req, res) => {
+// // Get All Borrowers
+// const getBorrowers = async (req, res) => {
+//   try {
+//     const [rows] = await db.query(
+//       "SELECT * FROM borrowers ORDER BY borrower_id DESC"
+//     );
+
+//     res.json(rows);
+//   } catch (error) {
+//     console.error(error);
+
+//     res.status(500).json({
+//       message: "Failed to fetch borrowers",
+//     });
+//   }
+// };
+
+// Get Single Borrower + Loans
+const getBorrower = async (req, res) => {
   try {
-    const [rows] = await db.query(
-      "SELECT * FROM borrowers ORDER BY borrower_id DESC"
+    const { id } = req.params;
+
+    // Get borrower
+    const [borrowerRows] = await db.query(
+      `
+      SELECT *
+      FROM borrowers
+      WHERE borrower_id = ?
+      `,
+      [id]
     );
 
-    res.json(rows);
+    if (borrowerRows.length === 0) {
+      return res.status(404).json({
+        message: "Borrower not found",
+      });
+    }
+
+    // Get borrower's loans
+    const [loanRows] = await db.query(
+      `
+      SELECT
+        loan_id,
+        borrower_id,
+        principal_amount,
+        interest_rate,
+        duration_value,
+        duration_unit,
+        interest_amount,
+        total_amount,
+        monthly_installment,
+        amount_paid,
+        balance,
+        loan_date,
+        due_date,
+        status,
+        created_at
+      FROM loans
+      WHERE borrower_id = ?
+      ORDER BY loan_id DESC
+      `,
+      [id]
+    );
+
+    res.json({
+      borrower: borrowerRows[0],
+      loans: loanRows,
+    });
+
   } catch (error) {
-    console.error(error);
+    console.error("Get borrower error:", error);
 
     res.status(500).json({
-      message: "Failed to fetch borrowers",
+      message: "Failed to fetch borrower",
+      error: error.message,
     });
   }
 };

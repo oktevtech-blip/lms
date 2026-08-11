@@ -69,13 +69,11 @@
 
 import API_URL from "./api";
 
-// =====================================
+// =============================
 // Get All Borrowers
-// =====================================
+// =============================
 export const getBorrowers = async () => {
-  const response = await fetch(
-    `${API_URL}/borrowers`
-  );
+  const response = await fetch(`${API_URL}/borrowers`);
 
   const data = await response.json();
 
@@ -88,10 +86,9 @@ export const getBorrowers = async () => {
   return data;
 };
 
-// =====================================
+// =============================
 // Get Single Borrower
-// Includes loans and summary
-// =====================================
+// =============================
 export const getBorrower = async (id) => {
   const response = await fetch(
     `${API_URL}/borrowers/${id}`
@@ -101,16 +98,16 @@ export const getBorrower = async (id) => {
 
   if (!response.ok) {
     throw new Error(
-      data.message || "Failed to load borrower"
+      data.message || "Borrower not found"
     );
   }
 
   return data;
 };
 
-// =====================================
+// =============================
 // Create Borrower
-// =====================================
+// =============================
 export const createBorrower = async (data) => {
   const response = await fetch(
     `${API_URL}/borrowers`,
@@ -134,13 +131,10 @@ export const createBorrower = async (data) => {
   return result;
 };
 
-// =====================================
+// =============================
 // Update Borrower
-// =====================================
-export const updateBorrower = async (
-  id,
-  data
-) => {
+// =============================
+export const updateBorrower = async (id, data) => {
   const response = await fetch(
     `${API_URL}/borrowers/${id}`,
     {
@@ -163,9 +157,9 @@ export const updateBorrower = async (
   return result;
 };
 
-// =====================================
+// =============================
 // Delete Borrower
-// =====================================
+// =============================
 export const deleteBorrower = async (id) => {
   const response = await fetch(
     `${API_URL}/borrowers/${id}`,
